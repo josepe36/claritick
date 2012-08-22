@@ -4,6 +4,8 @@
 {% block content_title %}Modification des coordonnées du laboratoire {{ client }}{% endblock %}
 
 {% block content %}
+<script type="text/javascript" src="{{ STATIC_URL }}javascript/client.js"></script>
+
 <p style="text-align: left;"><a href="{% url infos_login %}">&lt;&lt; Retour aux informations</a></p>
 <form method="POST">
     {% csrf_token %}
@@ -13,7 +15,64 @@
             {{ coordinate_form.as_table }}
             {{ client_form.as_table }}
             </table>
-        <button type="submit" dojoType="dijit.form.Button">Enregistrer</button>
+        <button data-dojo-type="dijit.form.Button" id="submitButton2">Enregistrer</button>
+    </fieldset>
+    <fieldset class="block form bigfields">
+        <legend>Host/Client</legend>
+        <table style="margin-left:3px;">
+            <thead>
+            <tr>
+                <th><b>Nom:</b><div dojoType="dijit.form.TextBox"
+                         style="max-width:200px;max-height:20px;margin-right:10px;margin-left:10px;margin-top:5px;"
+                         id="machine_name">
+                    </div>
+                </th>
+                <th><b>Hosts:</b>
+                    <select class="modifyclient"
+                            dojoType="dijit.form.FilteringSelect"
+                            onchange="controlifexist('dataTable');"
+                            id="host_id">
+                            {% for i in host_list_qs %}
+                                <option value="{{ i.pk }},{{ i }}" name="{{ i.pk }}">{{ i }}</option>
+                            {% endfor %}
+                    </select>
+                </th>
+                <th><button id="add_button"
+                            dojoType="dijit.form.Button"
+                            style="height:25px;margin-top:5px;"
+                            onclick="addNewClienthost('{% url ajax_add_host_client %}','dataTable','add','{{ client.id }}');">
+                            Add<img  width="20" height="20" src="{{ MEDIA_URL }}images/oxygen/list-add.png" />
+                    </button>
+                </th>
+                <th id="delete_button" style="visibility:hidden;">
+                    <button dojoType="dijit.form.Button"
+                            style="height:25px;margin-top:5px;"
+                            onclick="addNewClienthost('{% url ajax_delete_host_client %}','dataTable','del','{{ client.id }}');">
+                            Delete<img width="20" height="20" src="{{ MEDIA_URL }}images/oxygen/cancel.png" />
+                    </button>
+                </th>
+            </tr>
+            </thead>
+        </table>
+        <table id="dataTable" style="margin-left:3px;" cellspacing="50">
+            <tbody>
+                {% for hostname,hostip,hosttype,hostid,name in host_list_configure %}
+                <tr>
+                    <td class="host" style="overflow: hidden;width:260px;">{{ name }}</td>
+                    <td class="host2" style="overflow: hidden;width:480px;" >{{ hostname}}</td>
+                    <td class="host" style="overflow: hidden;width:20px;" align="center"><input value="{{ hostid }}" type="checkbox" name="chk"/></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </fieldset>
 </form>
+<script>
+dojo.require("dijit.form.Select");
+var table = document.getElementById("dataTable");
+var rowCount = table.rows.length;
+if (rowCount > 1) {
+    document.getElementById('delete_button').style.visibility = "visible";
+}
+</script>
 {% endblock %}

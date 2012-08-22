@@ -102,7 +102,7 @@ class ClientForm(df.ModelForm, ModelFormTableMixin):
     emails = df.CharField(required=False, widget=df.TextInput(), help_text=u"Paramtétrez la liste des adresses emails utilisées pour transmettre les rapports de ticket concernant tout le laboratoire.")
     class Meta:
         model = Client
-        exclude = ["parent", "label", "coordinates"]
+        exclude = ["parent", "hosts"]
 
 class CoordinateForm(df.ModelForm, ModelFormTableMixin):
     """

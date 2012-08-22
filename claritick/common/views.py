@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.generic import create_update
 from django.core.urlresolvers import reverse
@@ -10,11 +12,11 @@ from django.core.exceptions import PermissionDenied
 from django.forms.models import modelformset_factory
 from django.utils import simplejson as json
 
-from common.models import Client, Coordinate
+from common.models import Client, Coordinate, HostChar
 from common.forms import ClientForm, CoordinateForm
 from common.utils import user_has_perms_on_client
 from bondecommande.models import BonDeCommande
-
+from clariadmin.models import Host
 try:
     from chuser.forms import ChuserForm
 except ImportError:
@@ -81,11 +83,26 @@ def modify_client(request, client_id):
     else:
         client_form = ClientForm(instance=client)
         coordinate_form = CoordinateForm(instance=coordinate)
+    IP_ADDRESS_REGEXP = re.compile(r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
+    host_list = HostChar.objects.filter(client=client_id)
+    ip_table = []
+    for host in host_list:
+        host_ip = host.host.ip.split()
+        for ip in host_ip:
+            if IP_ADDRESS_REGEXP.match(ip):
+                ip_table.append([host.host,ip,host.host.type,host.host.id,host.name])
     
+    host_list_configure = ip_table
+
+    host_list_qs = Host.objects.filter_by_user(request.user)
+    host_list_qs = host_list_qs.filter(site__in = Client.objects.get_childs('parent', client.id))
+
     return render_to_response("common/client/modify.html", {
         "client": client,
         "client_form": client_form,
         "coordinate_form": coordinate_form,
+        "host_list_qs": host_list_qs,
+        "host_list_configure": host_list_configure,
     }, context_instance=RequestContext(request))
 
 @login_required

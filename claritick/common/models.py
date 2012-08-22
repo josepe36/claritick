@@ -159,8 +159,46 @@ class ClientField(models.ForeignKey):
 class ClientManager(models.Manager):
     
     def get_query_set(self):
-        qs = super(ClientManager, self).get_query_set().select_related("parent", "parent__parent", "coordinates")
+        qs = super(ClientManager, self).get_query_set().select_related("parent", "parent__parent")
         return qs
+
+    def get_parents(self, field, object_pk):
+        """
+        Effectue un WITH RECURSIVE Postgres sur field à partir de l'objet object_pk.
+        (Récupere tous les parents)
+        """
+        from django.db import connection
+        qn = connection.ops.quote_name
+
+        # le nom de la table
+        db_table = self.model._meta.db_table
+
+        # le nom de la pk
+        if self.model._meta.pk.db_column:
+            pk = self.model._meta.pk.db_column
+        else:
+            pk = self.model._meta.pk.column
+
+        # le nom du champs faisant la relation parent <-> enfant
+        model_field = getattr(self.model, field).field
+        if model_field.db_column:
+            db_field = model_field.db_column
+        else:
+            db_field = model_field.column
+
+        query = """
+            WITH RECURSIVE deep(n) AS (
+                SELECT %(db_table)s.%(pk)s FROM %(db_table)s WHERE %(db_table)s.%(pk)s = %(value)i
+                UNION
+                SELECT %(db_table)s.%(relation_field)s FROM %(db_table)s JOIN deep ON %(db_table)s.%(pk)s = deep.n
+            ) SELECT * FROM deep
+        """ % {
+            "db_table": qn(db_table),
+            "pk": qn(pk),
+            "relation_field": qn(db_field),
+            "value": object_pk,
+        }
+        return self.extra(where=["%s.%s IN (%s)" % (qn(db_table), qn(pk), query)])
 
     def get_childs(self, field, object_pk):
         """
@@ -215,6 +253,14 @@ class ClientManager(models.Manager):
             return self.filter(id__in=childs)
 
 # Models
+
+class HostChar(models.Model):
+    # Usefull for ManyToManyField from Client, because we need a charField more and
+    # ManytoManyField do not exploite natively a supplementary field.
+    host = models.ForeignKey("clariadmin.Host")
+    client = models.ForeignKey("Client")
+    name = models.CharField(max_length=64, blank=True, null=True)
+
 class Client(models.Model):
     class Meta:
         verbose_name = "Client"
@@ -225,7 +271,7 @@ class Client(models.Model):
     coordinates = models.ForeignKey(Coordinate, verbose_name=u'Coordonnées', blank=True, null=True)
     emails = models.CharField("Emails séparés par des virgule", max_length=2048, blank=True, null=True)
     notifications_by_fax = models.BooleanField(u"Transmission des notifications par fax", default=False)
-
+    hosts = models.ManyToManyField("clariadmin.Host", related_name="clients",through=HostChar, blank=True, null=True)
     objects = ClientManager()
 
     def __unicode__(self):

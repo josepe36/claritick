@@ -157,6 +157,10 @@ table#menuPrincipal{
     font-family: monospace !important;
 }
 
+#contenu th {
+    vertical-align: middle !important;
+}
+
 .claritick #contenu input[type="button"], .claritick #contenu input[type="submit"] {
     background: transparent;
     border: 0;
@@ -462,6 +466,18 @@ div#gauche a:hover {
     white-space: normal;
     font-weight: bold;
     font-size: 18px;
+    color: #777;
+}
+
+#contenu fieldset table .host {
+    width: 280px;
+    vertical-align: middle;
+    color: #777;
+}
+
+#contenu fieldset table .host2 {
+    width: 360px;
+    vertical-align: left;
     color: #777;
 }
 
@@ -996,4 +1012,16 @@ td.original p {
 }
 .rappel .form-calendar {
     margin-bottom: 10px;
+}
+
+.hostclient {
+    max-height: 500px;
+}
+
+.hostclient tr {
+    height: 30px;
+}
+.hostclient td {
+    width: 200px;
+    vertical-align: middle;
 }
