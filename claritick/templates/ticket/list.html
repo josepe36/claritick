@@ -172,17 +172,32 @@
 
 <!-- Tooltips -->
 {% for row in tickets.object_list %}
+    {{ position|default:"" }}
+    
+    {% if row.text|length > 300 %}
+    <div dojoType="dijit.Tooltip" connectId="ticket_line_{{ forloop.counter }}" position="after" style="display: none;">
+        {% if row.alarm %}
+            <h3>Alarme le {{ row.alarm.date_open|date:"d/m/Y à H:i" }} par {{ row.alarm.user_open }}</h3>
+                {{ row.alarm.reason }}
+            </h3>
+        {% endif %}
+        <h3>{{ row.title|wordwrap:80 }}</h3>
+            {{ row.text|wordwrap:80|linebreaks }}
+    </div>
+    
+    {% else %}
+    
     <div dojoType="dijit.Tooltip" connectId="ticket_line_{{ forloop.counter }}" position="above" style="display: none;">
         {% if row.alarm %}
             <h3>Alarme le {{ row.alarm.date_open|date:"d/m/Y à H:i" }} par {{ row.alarm.user_open }}</h3>
-            {{ row.alarm.reason }}
+                {{ row.alarm.reason }}
+            </h3>
         {% endif %}
         <h3>{{ row.title|wordwrap:80 }}</h3>
         {{ row.text|wordwrap:80|linebreaks }}
     </div>
-    {% for child in row.enfants %}
-        <div dojoType="dijit.Tooltip" connectId="ticket_child{{ forloop.parentloop.counter }}_line_{{ forloop.counter }}" position="above" style="display: none;"><h3>{{ child.title|wordwrap:80 }}</h3>{{ child.text|wordwrap:80|linebreaks }}</div>
-    {% endfor %}
+    {% endif %}
+    
 {% endfor %}
     
 <table class="resultat trafiquable" id="ticket_result_all">
